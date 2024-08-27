@@ -1,51 +1,35 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
     tools:context=".MainActivity"
-    android:padding="16dp">
+    android:padding="10dp"
+    android:layout_height="match_parent">
 
     <TextView
+        android:id="@+id/minPriceTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Price range"
-        android:textSize="18sp"
-        android:textStyle="bold"/>
+        android:text="₹5000"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp" />
 
     <TextView
+        android:id="@+id/maxPriceTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Nightly prices before fees and taxes"
-        android:textSize="14sp"/>
+        android:text="₹50000"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp" />
 
     <com.avi.newact.HistogramRangeSlider
         android:id="@+id/histogramRangeSlider"
-        android:layout_width="wrap_content"
-        android:layout_height="150dp"
-        android:padding="5dp"
-        android:layout_marginTop="16dp"/>
-
-    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="200dp"
+        android:padding="5dp"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="50dp"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Minimum"/>
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Maximum"/>
-
-    </LinearLayout>
-
-</LinearLayout>
+</RelativeLayout>
