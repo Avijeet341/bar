@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="HistogramRangeSlider">
+        <attr name="barColor" format="color"/>
+        <attr name="highlightedBarColor" format="color"/>
+        <attr name="thumbRadius" format="dimension"/>
+        <attr name="thumbShadowColor" format="color"/>
+        <attr name="thumbShadowRadius" format="dimension"/>
+    </declare-styleable>
+
+</resources>
