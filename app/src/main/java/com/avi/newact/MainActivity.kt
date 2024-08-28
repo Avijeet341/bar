@@ -3,10 +3,15 @@ package com.avi.newact
 import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import java.text.NumberFormat
+import java.util.Locale
 
 class MainActivity : AppCompatActivity(), HistogramRangeSlider.OnRangeChangeListener {
     private lateinit var minPriceTextView: TextView
     private lateinit var maxPriceTextView: TextView
+
+    private val maxAllowedPrice = 50000f
+    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +35,15 @@ class MainActivity : AppCompatActivity(), HistogramRangeSlider.OnRangeChangeList
     }
 
     override fun onRangeChanged(minPrice: Float, maxPrice: Float) {
-        minPriceTextView.text = "₹${minPrice.toInt()}"
-        maxPriceTextView.text = "₹${maxPrice.toInt()}"
+        currencyFormat.maximumFractionDigits = 0
+        val formattedMinPrice = currencyFormat.format(minPrice.toInt())
+        val formattedMaxPrice = if (maxPrice >= maxAllowedPrice) {
+            "${currencyFormat.format(maxPrice.toInt())}+"
+        } else {
+            currencyFormat.format(maxPrice.toInt())
+        }
+
+        minPriceTextView.text = formattedMinPrice
+        maxPriceTextView.text = formattedMaxPrice
     }
 }
