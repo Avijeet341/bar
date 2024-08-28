@@ -14,7 +14,6 @@ class HistogramRangeSlider @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    // Listener to handle price range changes
     interface OnRangeChangeListener {
         fun onRangeChanged(minPrice: Float, maxPrice: Float)
     }
@@ -33,6 +32,7 @@ class HistogramRangeSlider @JvmOverloads constructor(
     private var isDraggingLeft = false
     private var isDraggingRight = false
     private var isOverlapped = false
+    private var lastDragDirection = 0 // -1 for left, 1 for right, 0 for no drag
 
     private val selectedColor = Color.parseColor("#FF5A5F")
     private val unselectedColor = Color.parseColor("#E4E4E4")
@@ -70,7 +70,6 @@ class HistogramRangeSlider @JvmOverloads constructor(
         val barHeightMultiplier = 0.7f
         val baselineY = height + thumbRadius
 
-        // Draw histogram bars and baseline segments
         histogramData.forEachIndexed { index, value ->
             val left = index * (barWidth + barSpacing) + paddingLeft
             val barHeight = (value / maxDataValue * (height * barHeightMultiplier))
@@ -78,33 +77,26 @@ class HistogramRangeSlider @JvmOverloads constructor(
             val right = left + barWidth
             val rect = RectF(left, top, right, height + thumbRadius)
 
-            // Determine if the current bar is within the selected range
             val isSelected = left >= leftThumbX && right <= rightThumbX
             paint.color = if (isSelected) selectedColor else unselectedColor
 
-            // Draw the bar
             canvas.drawRoundRect(rect, cornerRadius, cornerRadius, paint)
         }
 
-        // Draw the baseline with color based on the selection
         paint.color = unselectedColor
         paint.strokeWidth = 4f
         canvas.drawLine(paddingLeft.toFloat(), baselineY, width.toFloat() - paddingRight, baselineY, paint)
 
-        // Draw the selected portion of the baseline
         paint.color = selectedColor
         if (leftThumbX < rightThumbX) {
             canvas.drawLine(leftThumbX, baselineY, rightThumbX, baselineY, paint)
         }
 
-        // Draw thumbs
         val thumbYPosition = height + thumbRadius
         if (isOverlapped) {
-            // Draw only one thumb when overlapped
             canvas.drawCircle(leftThumbX, thumbYPosition, thumbRadius, thumbPaint)
             canvas.drawCircle(leftThumbX, thumbYPosition, thumbRadius - thumbStrokeWidth / 2, thumbStrokePaint)
         } else {
-            // Draw both thumbs when not overlapped
             canvas.drawCircle(leftThumbX, thumbYPosition, thumbRadius, thumbPaint)
             canvas.drawCircle(leftThumbX, thumbYPosition, thumbRadius - thumbStrokeWidth / 2, thumbStrokePaint)
             canvas.drawCircle(rightThumbX, thumbYPosition, thumbRadius, thumbPaint)
@@ -114,11 +106,17 @@ class HistogramRangeSlider @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        leftThumbX = paddingLeft.toFloat() + thumbRadius
-        rightThumbX = w.toFloat() - paddingRight - thumbRadius
+        val minX = paddingLeft.toFloat() + thumbRadius
+        val maxX = w.toFloat() - paddingRight - thumbRadius
+        leftThumbX = minX
+        rightThumbX = maxX
+        updateRange()
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        val minX = paddingLeft.toFloat() + thumbRadius
+        val maxX = width.toFloat() - paddingRight - thumbRadius
+
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 val touchArea = thumbRadius * 1.5f
@@ -136,65 +134,74 @@ class HistogramRangeSlider @JvmOverloads constructor(
                         isDraggingRight = false
                     }
                 }
+                lastDragDirection = 0
             }
             MotionEvent.ACTION_MOVE -> {
-                val minX = paddingLeft.toFloat()
-                val maxX = width.toFloat() - paddingRight
+                val currentDragDirection = if (event.x > leftThumbX) 1 else -1
 
                 when {
                     isDraggingLeft -> {
-                        leftThumbX = event.x.coerceIn(minX, maxX)
-                        if (leftThumbX > rightThumbX) {
-                            rightThumbX = leftThumbX
-                            isOverlapped = true
+                        if (isOverlapped && lastDragDirection > 0) {
+                            rightThumbX = event.x.coerceIn(minX, maxX)
+                            leftThumbX = rightThumbX
                         } else {
-                            isOverlapped = false
+                            leftThumbX = event.x.coerceIn(minX, rightThumbX)
+                            if (leftThumbX == rightThumbX) {
+                                isOverlapped = true
+                            }
                         }
                     }
                     isDraggingRight -> {
-                        rightThumbX = event.x.coerceIn(minX, maxX)
-                        if (rightThumbX < leftThumbX) {
-                            leftThumbX = rightThumbX
-                            isOverlapped = true
+                        if (isOverlapped && lastDragDirection < 0) {
+                            leftThumbX = event.x.coerceIn(minX, maxX)
+                            rightThumbX = leftThumbX
                         } else {
-                            isOverlapped = false
+                            rightThumbX = event.x.coerceIn(leftThumbX, maxX)
+                            if (rightThumbX == leftThumbX) {
+                                isOverlapped = true
+                            }
                         }
                     }
                 }
+
+                leftThumbX = leftThumbX.coerceIn(minX, maxX)
+                rightThumbX = rightThumbX.coerceIn(minX, maxX)
+
+                if (leftThumbX != rightThumbX) {
+                    isOverlapped = false
+                }
+
+                lastDragDirection = currentDragDirection
                 updateRange()
                 invalidate()
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 isDraggingLeft = false
                 isDraggingRight = false
+                lastDragDirection = 0
             }
         }
         return true
     }
 
     private fun updateRange() {
-        val totalWidth = width.toFloat() - paddingLeft - paddingRight
-
-        // Calculate the relative positions of thumbs within the totalWidth
-        val relativeLeftX = (leftThumbX - paddingLeft) / totalWidth
-        val relativeRightX = (rightThumbX - paddingLeft) / totalWidth
-
-        // Calculate prices based on thumb positions
-        val minAllowedPrice = 25760f
-        val maxAllowedPrice = 25900f
+        val minAllowedPrice = 5000f
+        val maxAllowedPrice = 50000f
         val priceRange = maxAllowedPrice - minAllowedPrice
 
-        val minPrice = minAllowedPrice + (priceRange * relativeLeftX)
-        val maxPrice = minAllowedPrice + (priceRange * relativeRightX)
+        val totalWidth = width.toFloat() - paddingLeft - paddingRight - 2 * thumbRadius
+        val leftPosition = leftThumbX - (paddingLeft + thumbRadius)
+        val rightPosition = rightThumbX - (paddingLeft + thumbRadius)
 
-        // Ensure that minPrice and maxPrice are within the allowed range
+        val minPrice = minAllowedPrice + (priceRange * (leftPosition / totalWidth))
+        val maxPrice = minAllowedPrice + (priceRange * (rightPosition / totalWidth))
+
         val adjustedMinPrice = minPrice.coerceIn(minAllowedPrice, maxAllowedPrice)
         val adjustedMaxPrice = maxPrice.coerceIn(minAllowedPrice, maxAllowedPrice)
 
         Log.d("RangeSlider", "Thumb X positions: left=$leftThumbX, right=$rightThumbX")
         Log.d("RangeSlider", "Calculated Prices: minPrice=$adjustedMinPrice, maxPrice=$adjustedMaxPrice")
 
-        // Notify listener of the range change
         onRangeChangeListener?.onRangeChanged(adjustedMinPrice, adjustedMaxPrice)
     }
 }
