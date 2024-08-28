@@ -32,7 +32,7 @@ class HistogramRangeSlider @JvmOverloads constructor(
     private var isDraggingLeft = false
     private var isDraggingRight = false
     private var isOverlapped = false
-    private var lastDragDirection = 0 // -1 for left, 1 for right, 0 for no drag
+    private var lastTouchX = 0f
 
     private val selectedColor = Color.parseColor("#FF5A5F")
     private val unselectedColor = Color.parseColor("#E4E4E4")
@@ -119,6 +119,7 @@ class HistogramRangeSlider @JvmOverloads constructor(
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                lastTouchX = event.x
                 val touchArea = thumbRadius * 1.5f
                 when {
                     event.x in (leftThumbX - touchArea)..(leftThumbX + touchArea) -> {
@@ -134,29 +135,45 @@ class HistogramRangeSlider @JvmOverloads constructor(
                         isDraggingRight = false
                     }
                 }
-                lastDragDirection = 0
             }
             MotionEvent.ACTION_MOVE -> {
-                val currentDragDirection = if (event.x > leftThumbX) 1 else -1
+                val dx = event.x - lastTouchX
+                lastTouchX = event.x
 
-                when {
-                    isDraggingLeft -> {
-                        if (isOverlapped && lastDragDirection > 0) {
-                            rightThumbX = event.x.coerceIn(minX, maxX)
+                if (isOverlapped) {
+                    if (dx > 0) {
+                        // Moving right
+                        leftThumbX = (leftThumbX + dx).coerceIn(minX, maxX)
+                        if (leftThumbX > rightThumbX) {
+                            val temp = leftThumbX
                             leftThumbX = rightThumbX
-                        } else {
-                            leftThumbX = event.x.coerceIn(minX, rightThumbX)
+                            rightThumbX = temp
+                            isDraggingLeft = false
+                            isDraggingRight = true
+                        }
+                        isOverlapped = false
+                    } else if (dx < 0) {
+                        // Moving left
+                        rightThumbX = (rightThumbX + dx).coerceIn(minX, maxX)
+                        if (rightThumbX < leftThumbX) {
+                            val temp = rightThumbX
+                            rightThumbX = leftThumbX
+                            leftThumbX = temp
+                            isDraggingRight = false
+                            isDraggingLeft = true
+                        }
+                        isOverlapped = false
+                    }
+                } else {
+                    when {
+                        isDraggingLeft -> {
+                            leftThumbX = (leftThumbX + dx).coerceIn(minX, rightThumbX)
                             if (leftThumbX == rightThumbX) {
                                 isOverlapped = true
                             }
                         }
-                    }
-                    isDraggingRight -> {
-                        if (isOverlapped && lastDragDirection < 0) {
-                            leftThumbX = event.x.coerceIn(minX, maxX)
-                            rightThumbX = leftThumbX
-                        } else {
-                            rightThumbX = event.x.coerceIn(leftThumbX, maxX)
+                        isDraggingRight -> {
+                            rightThumbX = (rightThumbX + dx).coerceIn(leftThumbX, maxX)
                             if (rightThumbX == leftThumbX) {
                                 isOverlapped = true
                             }
@@ -164,26 +181,16 @@ class HistogramRangeSlider @JvmOverloads constructor(
                     }
                 }
 
-                leftThumbX = leftThumbX.coerceIn(minX, maxX)
-                rightThumbX = rightThumbX.coerceIn(minX, maxX)
-
-                if (leftThumbX != rightThumbX) {
-                    isOverlapped = false
-                }
-
-                lastDragDirection = currentDragDirection
                 updateRange()
                 invalidate()
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 isDraggingLeft = false
                 isDraggingRight = false
-                lastDragDirection = 0
             }
         }
         return true
     }
-
     private fun updateRange() {
         val minAllowedPrice = 5000f
         val maxAllowedPrice = 50000f
