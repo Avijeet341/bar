@@ -28,7 +28,7 @@
         android:id="@+id/histogramRangeSlider"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:padding="8dp"
+        android:padding="0dp"
         android:layout_centerInParent="true"
         android:layout_marginTop="50dp"/>
 

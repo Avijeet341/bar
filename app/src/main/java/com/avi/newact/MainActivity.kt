@@ -23,12 +23,15 @@ class MainActivity : AppCompatActivity(), HistogramRangeSlider.OnRangeChangeList
         minPriceTextView = findViewById(R.id.minPriceTextView)
         maxPriceTextView = findViewById(R.id.maxPriceTextView)
 
-        // Example data - replace with your actual data
+        // Updated sample data to match the image, including the extended right tail
         val sampleData = listOf(
-            1f, 2f, 3f, 5f, 8f, 12f, 18f, 25f, 33f, 42f,
-            52f, 63f, 75f, 88f, 100f, 110f, 118f, 124f, 128f, 130f,
-            130f, 128f, 124f, 118f, 110f, 100f, 88f, 75f, 63f, 52f,
-            42f, 33f, 25f, 18f, 12f, 8f, 5f, 3f, 2f, 1f
+            5f, 8f, 12f, 18f, 25f, 35f, 48f, 64f, 85f, 110f,
+            140f, 175f, 215f, 260f, 310f, 365f, 425f, 490f, 560f, 635f,
+            715f, 800f, 890f, 985f, 1000f, 985f, 890f, 800f, 715f, 635f,
+            560f, 490f, 425f, 365f, 310f, 260f, 215f, 175f, 140f, 110f,
+            85f, 64f, 48f, 35f, 25f, 18f, 12f, 8f, 5f, 3f,
+            // Extended tail
+            2f, 2f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f
         )
 
         histogramRangeSlider.setHistogramData(sampleData)
