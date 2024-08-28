@@ -145,34 +145,29 @@ class HistogramRangeSlider @JvmOverloads constructor(
     }
 
     private fun updateRange() {
-        val totalWidth = width.toFloat() - paddingLeft - paddingRight - thumbRadius * 2 // Adjust for thumb radius
+        val totalWidth = width.toFloat() - paddingLeft - paddingRight - thumbRadius * 2
 
         // Ensure thumbs are within bounds
-        val clampedLeftThumbX = maxOf(paddingLeft + thumbRadius, minOf(leftThumbX, rightThumbX))
-        val clampedRightThumbX = maxOf(paddingLeft + thumbRadius, minOf(rightThumbX, width - paddingRight - thumbRadius))
+        val clampedLeftThumbX = maxOf(paddingLeft.toFloat(), minOf(leftThumbX, rightThumbX - thumbRadius))
+        val clampedRightThumbX = maxOf(clampedLeftThumbX + thumbRadius, minOf(rightThumbX, width.toFloat() - paddingRight))
 
         // Calculate the relative positions of thumbs within the totalWidth
-        val relativeLeftX = (clampedLeftThumbX - (paddingLeft + thumbRadius)) / totalWidth
-        val relativeRightX = (clampedRightThumbX - (paddingLeft + thumbRadius)) / totalWidth
+        val relativeLeftX = (clampedLeftThumbX - paddingLeft) / totalWidth
+        val relativeRightX = (clampedRightThumbX - paddingLeft) / totalWidth
 
-        // Calculate prices based on thumb positions
-        val minPrice = 5000 + (45000 * relativeLeftX)
-        val maxPrice = 5000 + (45000 * relativeRightX)
+        // Calculate prices based on thumb positions using the actual price range
+        val minAllowedPrice = 24260f
+        val maxAllowedPrice = 26771f
+        val priceRange = maxAllowedPrice - minAllowedPrice
 
-        // Ensure that minPrice and maxPrice are within the allowed range
-        val minAllowedPrice = 5000f
-        val maxAllowedPrice = 50000f
-
-        // Adjusting the range to ensure full coverage
-        val adjustedMinPrice = minOf(minPrice, maxAllowedPrice)
-        val adjustedMaxPrice = maxOf(maxPrice, minAllowedPrice)
+        val minPrice = minAllowedPrice + (priceRange * relativeLeftX)
+        val maxPrice = minAllowedPrice + (priceRange * relativeRightX)
 
         Log.d("RangeSlider", "Thumb X positions: left=$clampedLeftThumbX, right=$clampedRightThumbX")
         Log.d("RangeSlider", "Calculated Prices: minPrice=$minPrice, maxPrice=$maxPrice")
-        Log.d("RangeSlider", "Adjusted Prices: minPrice=$adjustedMinPrice, maxPrice=$adjustedMaxPrice")
 
         // Notify listener of the range change
-        onRangeChangeListener?.onRangeChanged(adjustedMinPrice, adjustedMaxPrice)
+        onRangeChangeListener?.onRangeChanged(minPrice, maxPrice)
     }
 
 
